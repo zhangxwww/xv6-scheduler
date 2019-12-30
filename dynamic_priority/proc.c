@@ -90,6 +90,8 @@ found:
   p->pid = nextpid++;
 
   p->priority = DEFAULT_PRIORITY;
+  p->runningTime = 0;
+  p->waitingTime = 0;
 
   release(&ptable.lock);
 
@@ -346,6 +348,22 @@ scheduler(void)
           highestPriorityProcess = pp;
         }
       }
+      for (pp = ptable.proc; pp < &ptable.proc[NPROC]; ++pp) {
+        if (pp == highestPriorityProcess) {
+          pp->waitingTime = 0;
+          pp->runningTime++;
+          if (pp->runningTime % PRIORITY_CHANGE_INTERVAL == 0) {
+            increasePriority(pp);
+          }
+        }
+        else {
+          pp->waitingTime++;
+          pp->runningTime = 0;
+          if (pp->runningTime % PRIORITY_CHANGE_INTERVAL == 0) {
+            decreasePriority(pp);
+          }
+        }
+      }
       p = highestPriorityProcess;
 
       //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
@@ -544,6 +562,18 @@ procdump(void)
         cprintf(" %p", pc[i]);
     }
     cprintf("\n");
+  }
+}
+
+void increasePriority(struct proc * p) {
+  if (p->priority < MAX_PRIORITY) {
+    p->priority++;
+  }
+}
+
+void decreasePriority(struct proc * p) {
+  if (p->priority > MIN_PRIORITY) {
+    p->priority--;
   }
 }
 

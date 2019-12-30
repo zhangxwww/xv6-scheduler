@@ -1,3 +1,4 @@
+#define PRIORITY_CHANGE_INTERVAL 10
 #define MAX_PRIORITY 10
 #define MIN_PRIORITY 1
 #define DEFAULT_PRIORITY 5
@@ -54,6 +55,8 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int priority;                // Priority of the process
+  uint waitingTime;             // Waiting time of the process
+  uint runningTime;             // Running time of the process
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -61,3 +64,6 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+void increasePriority(struct proc *);
+void decreasePriority(struct proc *);
