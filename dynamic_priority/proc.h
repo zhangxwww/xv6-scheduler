@@ -1,4 +1,4 @@
-#define PRIORITY_CHANGE_INTERVAL 10
+#define PRIORITY_CHANGE_INTERVAL 100
 #define MAX_PRIORITY 10
 #define MIN_PRIORITY 1
 #define DEFAULT_PRIORITY 5
@@ -65,5 +65,6 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 
+void updateTimes();
 void increasePriority(struct proc *);
 void decreasePriority(struct proc *);

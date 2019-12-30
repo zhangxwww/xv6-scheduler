@@ -348,22 +348,6 @@ scheduler(void)
           highestPriorityProcess = pp;
         }
       }
-      for (pp = ptable.proc; pp < &ptable.proc[NPROC]; ++pp) {
-        if (pp == highestPriorityProcess) {
-          pp->waitingTime = 0;
-          pp->runningTime++;
-          if (pp->runningTime % PRIORITY_CHANGE_INTERVAL == 0) {
-            increasePriority(pp);
-          }
-        }
-        else {
-          pp->waitingTime++;
-          pp->runningTime = 0;
-          if (pp->runningTime % PRIORITY_CHANGE_INTERVAL == 0) {
-            decreasePriority(pp);
-          }
-        }
-      }
       p = highestPriorityProcess;
 
       //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
@@ -565,13 +549,42 @@ procdump(void)
   }
 }
 
-void increasePriority(struct proc * p) {
+void 
+updateTimes() {
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; ++p) {
+    switch (p->state) {
+    case RUNNABLE:
+      p->waitingTime++;
+      p->runningTime = 0;
+      if (p->waitingTime % PRIORITY_CHANGE_INTERVAL == 0) {
+        decreasePriority(p);
+      }
+      break;
+    case RUNNING:
+      p->runningTime++;
+      p->waitingTime = 0;
+      if (p->runningTime % PRIORITY_CHANGE_INTERVAL == 0) {
+        increasePriority(p);
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  release(&ptable.lock);
+}
+
+void 
+increasePriority(struct proc * p) {
   if (p->priority < MAX_PRIORITY) {
     p->priority++;
   }
 }
 
-void decreasePriority(struct proc * p) {
+void 
+decreasePriority(struct proc * p) {
   if (p->priority > MIN_PRIORITY) {
     p->priority--;
   }
