@@ -336,7 +336,7 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
-      cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
+      //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
