@@ -89,6 +89,8 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  p->createTime = ticks;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -124,12 +126,13 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
-  
+
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
+  p->createTime = ticks;
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
@@ -294,6 +297,7 @@ wait(void)
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
+        p->createTime = 0;
         p->state = UNUSED;
         release(&ptable.lock);
         return pid;
@@ -322,6 +326,7 @@ wait(void)
 void
 scheduler(void)
 {
+
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
@@ -330,17 +335,28 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
+    struct proc *processWithMinCreateTime = 0;
+
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if (p->state != RUNNABLE) {
         continue;
+      }
+      if (processWithMinCreateTime == 0 
+          || p->createTime < processWithMinCreateTime->createTime) {
+        processWithMinCreateTime = p;
+      }
+    }
+    if (processWithMinCreateTime != 0 
+        && processWithMinCreateTime->state == RUNNABLE) {
+      p = processWithMinCreateTime;
 
-      cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -353,7 +369,6 @@ scheduler(void)
       c->proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
 
