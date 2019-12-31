@@ -9,6 +9,7 @@
 
 /* --------------------------------------------------- */
 // definitions of a Red-Black Tree(RBT)
+/*
 #define BLACK 0
 #define RED 1
 
@@ -20,7 +21,7 @@ struct Node {
     struct proc* data;
 };
 
-Node *root = 0;
+struct Node **root = 0;
 
 struct Node** createRBTree() {
     root = (struct Node**)malloc(sizeof(struct Node*));
@@ -134,7 +135,7 @@ void insertFixup(struct Node** root, struct Node* node) {
     }
 }
 
-void insert(struct Node** root, struct Node* node) {
+void insert_(struct Node** root, struct Node* node) {
     struct Node* y = 0;
     struct Node* x = *root;
 
@@ -163,7 +164,7 @@ void insert(struct Node** root, struct Node* node) {
     insertFixup(root, node);
 }
 
-int insert(struct Node* root, struct proc* p) {
+int insert(struct Node** root, struct proc* p) {
     struct Node* node = (struct Node*)malloc(sizeof(struct Node));
     if (node != 0) {
         node->data = p;
@@ -171,7 +172,7 @@ int insert(struct Node* root, struct proc* p) {
         node->right = 0;
         node->parent = 0;
         node->color = BLACK;
-        insert(root, node);
+        insert_(root, node);
         return 0;
     }
     else {
@@ -260,7 +261,7 @@ void delete(struct Node** root, struct Node* node) {
                 node->parent->left = replace;
             }
             else {
-                node->parent->right = replace
+                node->parent->right = replace;
             }
         }
         else {
@@ -327,22 +328,103 @@ void delete(struct Node** root, struct Node* node) {
 }
 
 
-void Node* popMin(struct Node** root, struct proc** val) {
-    struct Node* node;
+int popMin(struct Node** root, struct proc** val) {
+    struct Node* node = 0;
     if (root) {
         node = minimum(*root);
     }
     if (node == 0) {
-        return 0;
+        return 1;
     }
     else {
         *val = node->data;
         delete(root, node);
     }
+    return 0;
 }
+*/
 /* ---------------------------------------------------- */
 
-struct Node** procTree = createRBTree();
+/* ------------------------------------------------------------ */
+// definition of the priority queue implemented with binary heap
+// Array to store the process heap data
+struct proc *procHeap[64];
+int heapSize = 0;
+
+void initHeap() {
+    for (int i = 0; i < 64; i++) {
+        procHeap[i] = 0;
+    }
+}
+
+void siftdown(int startPos, int pos) {
+    struct proc * newItem = procHeap[pos];
+    while (pos > startPos) {
+        int parentPos = (pos - 1) >> 1;
+        struct proc * parent = procHeap[parentPos];
+        if (newItem->execTime < parent->execTime) {
+            procHeap[pos] = parent;
+            pos = parentPos;
+            continue;
+        }
+        break;
+    }
+    procHeap[pos] = newItem;
+}
+
+void siftup(int pos) {
+    int endPos = heapSize;
+    int startPos = pos;
+    struct proc *newItem = procHeap[pos];
+    int childPos = 2 * pos + 1;
+    while (childPos < endPos) {
+        int rightPos = childPos + 1;
+        if ((rightPos < endPos) && !(procHeap[childPos] < procHeap[rightPos])) {
+            childPos = rightPos;
+        }
+        procHeap[pos] = procHeap[childPos];
+        pos = childPos;
+        childPos = 2 * pos + 1;
+    }
+    procHeap[pos] = newItem;
+    siftdown(startPos, pos);
+}
+
+// return the size of the heap
+// if successfully insert the new data
+// else return -1
+int heappush(struct proc *item) {
+    if (heapSize < 64) {
+        procHeap[heapSize++] = item;
+        siftdown(0, heapSize - 1);
+        return heapSize;
+    }
+    else {
+        return -1;
+    }
+}
+
+// return the minimum element
+// meanwhile deleting it from the heap
+// if the heap is empty return NULL(0)
+struct proc* heappop() {
+    if (heapSize == 0) {
+        return 0;
+    }
+    if (heapSize == 1) {
+        struct proc *root = procHeap[0];
+        procHeap[0] = 0;
+        heapSize = 0;
+        return root;
+    }
+    struct proc *last = procHeap[heapSize - 1];
+    struct proc *root = procHeap[0];
+    procHeap[0] = last;
+    procHeap[--heapSize] = 0;
+    siftup(0);
+    return root;
+}
+
 uint burstStartTime;
 int numProcs = 0;
 
@@ -490,7 +572,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
-  insert(procTree, p);
+  heappush(p);
   release(&ptable.lock);
 }
 
@@ -556,7 +638,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-  insert(procTree, np);
+  heappush(np);
   release(&ptable.lock);
 
   return pid;
@@ -679,8 +761,8 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-      struct Node* p;
-      popMin(procTree, p);
+      struct proc* p;
+      p = heappop();
       if (p != 0) {
         //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
         // Switch to chosen process.  It is the process's job
@@ -737,7 +819,7 @@ yield(void)
   acquire(&ptable.lock);  //DOC: yieldlock
   struct proc *p = myproc();
   p->state = RUNNABLE;
-  insert(procTree, p);
+  heappush(p);
   sched();
   release(&ptable.lock);
 }
@@ -810,10 +892,12 @@ wakeup1(void *chan)
 {
   struct proc *p;
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->state == SLEEPING && p->chan == chan) {
       p->state = RUNNABLE;
-      insert(procTree, p);
+      heappush(p);
+    }
+  }
 }
 
 // Wake up all processes sleeping on chan.
@@ -840,7 +924,7 @@ kill(int pid)
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
-        insert(procTree, p);
+        heappush(p);
       release(&ptable.lock);
       return 0;
     }
