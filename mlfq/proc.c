@@ -98,7 +98,6 @@ found:
   p->pid = nextpid++;
 
   // Initialize additional process attributes
-  p->runTime = 0;
   p->schedTimes = 0;
 
   release(&ptable.lock);
