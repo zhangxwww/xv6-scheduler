@@ -344,7 +344,7 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for (int priority = 0; priority <= 3; priority++) {
+    for (int priority = 0; priority < 3; priority++) {
       for (int i = 0; i <= numprocs[priority]; i++) {
           if (q[priority][i]->state != RUNNABLE) {
               continue;
@@ -374,7 +374,7 @@ scheduler(void)
                 for (int j = i; j < numprocs[priority]; j++) {
                     q[priority][j] = q[priority][j + 1];
                 }
-                q[priority][numprocs--] = 0;
+                q[priority][(numprocs[priority])--] = 0;
                 p->schedTimes = 0;
             }
             // move the process to the rear of the queue
@@ -429,7 +429,7 @@ yield(void)
   struct proc* p = 0;
   acquire(&ptable.lock);  //DOC: yieldlock
   p = myproc();
-  q[p->priority][++numprocess[p->priority]] = p;
+  q[p->priority][++numprocs[p->priority]] = p;
   p->state = RUNNABLE;
   sched();
   release(&ptable.lock);
@@ -503,10 +503,12 @@ wakeup1(void *chan)
 {
   struct proc *p;
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->state == SLEEPING && p->chan == chan) {
       q[p->priority][++(numprocs[p->priority])] = p;
       p->state = RUNNABLE;
+    }
+  }
 }
 
 // Wake up all processes sleeping on chan.
