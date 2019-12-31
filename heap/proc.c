@@ -1,4 +1,4 @@
- #include "types.h"
+#include "types.h"
 #include "defs.h"
 #include "param.h"
 #include "memlayout.h"
@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "heap.h"
 
 struct {
   struct spinlock lock;
@@ -24,6 +25,31 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+}
+
+// Compute the priority of a process p
+void computePriority(struct proc *p) {
+    if (ticks - p->createTime > 0) {
+        p->priority = (double) ((p->runTime) / (ticks - p->createTime));
+    }
+    else {
+        p->priority = 0;
+    }
+    if (p->priority == 1) {
+        p->priority = 0.5;
+    }
+}
+
+// Redefines priorities of processes
+// according to the ptable
+void updateHeap() {
+    struct proc *p;
+    initHeap();
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->state == RUNNABLE) {
+            heappush(p);
+        }
+    }
 }
 
 // Must be called with interrupts disabled
@@ -89,7 +115,10 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
-  p->priority = DEFAULT_PRIORITY;
+  // Initialize additional process attributes
+  p->createTime = ticks;
+  p->runTime = 0;
+  p->schedTimes = 0;
 
   release(&ptable.lock);
 
@@ -149,9 +178,9 @@ userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-
+  computePriority(p);
   p->state = RUNNABLE;
-
+  heappush(p);
   release(&ptable.lock);
 }
 
@@ -217,7 +246,8 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-
+  computePriority(np);
+  heappush(np);
   release(&ptable.lock);
 
   return pid;
@@ -327,45 +357,45 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+  // how many times has the scheduler switched between processes
+  int numSched = 0;
+
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
 
-      struct proc *highestPriorityProcess = p;
-      struct proc *pp = 0;            
-      for (pp = ptable.proc; pp < &ptable.proc[NPROC]; ++pp) {
-        if (pp->state == RUNNABLE 
-            && highestPriorityProcess->priority > pp->priority) {
-          highestPriorityProcess = pp;
-        }
-      }
-      p = highestPriorityProcess;
-
-      //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+    // After 500 schedules update the whole heap
+    if (numSched == 500) {
+        updateHeap();
+        numSched = 0;
     }
-    release(&ptable.lock);
+    numSched++;
 
+    // no RUNNABLE process in the heap
+    if (heapSize == 0) {
+        release(&ptable.lock);
+        continue;
+    }
+
+    // there exists at least one RUNNABLE process
+    // extract the minimum one
+    p = heappop();
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    (p->schedTimes)++;
+    p->state = RUNNING;
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+    release(&ptable.lock);
   }
 }
 
@@ -399,8 +429,12 @@ sched(void)
 void
 yield(void)
 {
+  struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  p = myproc();
+  p->state = RUNNABLE;
+  computePriority(p);
+  heappush(p);
   sched();
   release(&ptable.lock);
 }
@@ -476,6 +510,8 @@ wakeup1(void *chan)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
       p->state = RUNNABLE;
+      computePriority(p);
+      heappush(p);
 }
 
 // Wake up all processes sleeping on chan.
@@ -500,8 +536,11 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING) {
         p->state = RUNNABLE;
+        computePriority(p);
+        heappush(p);
+      }
       release(&ptable.lock);
       return 0;
     }
@@ -545,18 +584,4 @@ procdump(void)
     }
     cprintf("\n");
   }
-}
-
-int
-changePriority(int pid, int priority) {
-  struct proc *p;
-  acquire(&ptable.lock);
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if (p->pid == pid) {
-      p->priority = priority < MAX_PRIORITY ? priority : MAX_PRIORITY;
-      break;
-    }
-  }
-  release(&ptable.lock);
-  return pid;
 }
