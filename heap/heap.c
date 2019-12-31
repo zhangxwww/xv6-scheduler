@@ -20,11 +20,11 @@ void initHeap() {
 }
 
 void siftdown(startPos, pos) {
-    newItem = procHeap[pos];
-    while (pos > startpos) {
-        parentPos = (pos - 1) >> 1;
-        parent = heap[parentPos];
-        if (newItem->priority < parent.priority) {
+    struct proc * newItem = procHeap[pos];
+    while (pos > startPos) {
+        int parentPos = (pos - 1) >> 1;
+        struct proc * parent = procHeap[parentPos];
+        if (newItem->priority < parent->priority) {
             procHeap[pos] = parent;
             pos = parentPos;
             continue;

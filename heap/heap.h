@@ -1,5 +1,7 @@
+struct proc;
+
 // Process heap functions definitions
 void initHeap();
-void heappop();
+struct proc * heappop();
 void heappush();
 int heapsize();
