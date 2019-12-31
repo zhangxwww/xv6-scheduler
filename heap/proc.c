@@ -13,6 +13,8 @@
 struct proc *procHeap[64];
 int heapSize = 0;
 
+void printHeap();
+
 void initHeap() {
     for (int i = 0; i < 64; i++) {
         procHeap[i] = 0;
@@ -374,8 +376,9 @@ exit(void)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
       p->parent = initproc;
-      if(p->state == ZOMBIE)
+      if(p->state == ZOMBIE) {
         wakeup1(initproc);
+      }
     }
   }
 
@@ -449,10 +452,11 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    acquire(&ptable.lock);
+    acquire(&ptable.lock);/*
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE){
         continue;
+      }*/
       // After 500 schedules update the whole heap
       if (numSched == 500) {
           updateHeap();
@@ -468,10 +472,12 @@ scheduler(void)
 
       // there exists at least one RUNNABLE process
       // extract the minimum one
+      printHeap();
       p = heappop();
       if (p == 0) {
         continue;
       }
+      //cprintf("%s\n", p->name);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -485,7 +491,7 @@ scheduler(void)
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-    }
+    //}
     release(&ptable.lock);
   }
 }
@@ -759,4 +765,11 @@ void updatestatistics(int* cpu_busy) {
   }
   release(&ptable.lock);
   *cpu_busy = has_running_proc;
+}
+
+void printHeap() {
+  cprintf("=============\n");
+  for (int i = 0; i < heapSize; ++i) {
+    cprintf("%s %d  ", procHeap[i]->name, procHeap[i]->priority);
+  }
 }
