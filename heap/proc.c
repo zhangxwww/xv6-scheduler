@@ -31,7 +31,7 @@ void siftdown(int startPos, int pos) {
         }
         break;
     }
-    procHeap[pos] = newItem
+    procHeap[pos] = newItem;
 }
 
 void siftup(int pos) {
@@ -41,7 +41,7 @@ void siftup(int pos) {
     int childPos = 2 * pos + 1;
     while (childPos < endPos) {
         int rightPos = childPos + 1;
-        if ((rightPos < endPos) && !(heap[childPos] < heap[rightPos])) {
+        if ((rightPos < endPos) && !(procHeap[childPos] < procHeap[rightPos])) {
             childPos = rightPos;
         }
         procHeap[pos] = procHeap[childPos];
@@ -57,7 +57,7 @@ void siftup(int pos) {
 // else return -1
 int heappush(struct proc *item) {
     if (heapSize < 64) {
-        procHeap[++heapSize] = item;
+        procHeap[heapSize++] = item;
         siftdown(0, heapSize - 1);
         return heapSize;
     }
@@ -82,7 +82,7 @@ struct proc* heappop() {
     struct proc *last = procHeap[heapSize - 1];
     struct proc *root = procHeap[0];
     procHeap[0] = last;
-    procHeap[heapSize--] = 0;
+    procHeap[--heapSize] = 0;
     siftup(0);
     return root;
 }
@@ -110,12 +110,12 @@ pinit(void)
 // Compute the priority of a process p
 void computePriority(struct proc *p) {
     if (ticks - p->createTime > 0) {
-        p->priority = (double) ((p->runTime) / (ticks - p->createTime));
+        p->priority = (double) ((double)(p->runTime) / (ticks - p->createTime));
     }
     else {
         p->priority = 0;
     }
-    if (p->priority == 1) {
+    if (p->priority - 1 < 1e-4 && 1 - p->priority < 1e-4) {
         p->priority = 0.5;
     }
 }
@@ -439,42 +439,47 @@ scheduler(void)
   c->proc = 0;
   // how many times has the scheduler switched between processes
   int numSched = 0;
-
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     acquire(&ptable.lock);
-
-    // After 500 schedules update the whole heap
-    if (numSched == 500) {
-        updateHeap();
-        numSched = 0;
-    }
-    numSched++;
-
-    // no RUNNABLE process in the heap
-    if (heapSize == 0) {
-        release(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if(p->state != RUNNABLE)
         continue;
+      // After 500 schedules update the whole heap
+      if (numSched == 500) {
+          updateHeap();
+          numSched = 0;
+      }
+      numSched++;
+
+      // no RUNNABLE process in the heap
+      if (heapSize == 0) {
+          release(&ptable.lock);
+          continue;
+      }
+
+      // there exists at least one RUNNABLE process
+      // extract the minimum one
+      p = heappop();
+      if (p == 0) {
+        continue;
+      }
+
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      (p->schedTimes)++;
+      p->state = RUNNING;
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
     }
-
-    // there exists at least one RUNNABLE process
-    // extract the minimum one
-    p = heappop();
-
-    // Switch to chosen process.  It is the process's job
-    // to release ptable.lock and then reacquire it
-    // before jumping back to us.
-    c->proc = p;
-    switchuvm(p);
-    (p->schedTimes)++;
-    p->state = RUNNING;
-    swtch(&(c->scheduler), p->context);
-    switchkvm();
-    // Process is done running for now.
-    // It should have changed its p->state before coming back.
-    c->proc = 0;
     release(&ptable.lock);
   }
 }
@@ -588,10 +593,11 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan) {
       p->state = RUNNABLE;
       computePriority(p);
       heappush(p);
+    }
 }
 
 // Wake up all processes sleeping on chan.
