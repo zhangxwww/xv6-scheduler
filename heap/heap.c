@@ -75,7 +75,7 @@ struct proc* heappop() {
     }
     if (heapSize == 1) {
         struct proc *root = procHeap[0];
-        heap[0] = 0;
+        procHeap[0] = 0;
         heapSize = 0;
         return root;
     }

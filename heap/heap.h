@@ -3,4 +3,4 @@ struct proc;
 // Process heap functions definitions
 void initHeap();
 struct proc * heappop();
-int heappush(struct proc* item);
+int heappush(struct proc *);
