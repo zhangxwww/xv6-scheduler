@@ -55,9 +55,6 @@ struct proc {
   double priority;             // dynamic priority computed by runTime / (ticks - createTime)
 };
 
-extern struct proc *procHeap[64];
-extern int heapSize;
-
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
