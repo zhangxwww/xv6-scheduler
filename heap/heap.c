@@ -19,7 +19,7 @@ void initHeap() {
     }
 }
 
-void siftdown(startPos, pos) {
+void siftdown(int startPos, int pos) {
     struct proc * newItem = procHeap[pos];
     while (pos > startPos) {
         int parentPos = (pos - 1) >> 1;
@@ -34,13 +34,13 @@ void siftdown(startPos, pos) {
     procHeap[pos] = newItem
 }
 
-void siftup(pos) {
-    endPos = heapSize;
-    startPos = pos;
-    newItem = procHeap[pos];
-    childPos = 2 * pos + 1;
+void siftup(int pos) {
+    int endPos = heapSize;
+    int startPos = pos;
+    struct proc *newItem = procHeap[pos];
+    int childPos = 2 * pos + 1;
     while (childPos < endPos) {
-        rightPos = childPos + 1;
+        int rightPos = childPos + 1;
         if ((rightPos < endPos) && !(heap[childPos] < heap[rightPos])) {
             childPos = rightPos;
         }
@@ -56,7 +56,7 @@ void siftup(pos) {
 // if successfully insert the new data
 // else return -1
 int heappush(struct proc *item) {
-    if (heapSize < MAX_HEAP_LENGTH) {
+    if (heapSize < 64) {
         procHeap[++heapSize] = item;
         siftdown(0, heapSize - 1);
         return heapSize;
@@ -74,16 +74,16 @@ struct proc* heappop() {
         return 0;
     }
     if (heapSize == 1) {
-        root = procHeap[0];
+        struct proc *root = procHeap[0];
         heap[0] = 0;
         heapSize = 0;
         return root;
     }
-    last = procHeap[heapSize - 1];
-    root = procHeap[0];
+    struct proc *last = procHeap[heapSize - 1];
+    struct proc *root = procHeap[0];
     procHeap[0] = last;
     procHeap[heapSize--] = 0;
     siftup(0);
-    return item;
+    return root;
 }
 
