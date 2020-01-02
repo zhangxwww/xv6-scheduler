@@ -511,7 +511,6 @@ found:
   p->pid = nextpid++;
   p->createTime = ticks;
   p->execTime = 0;
-  numProcs++;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -519,6 +518,7 @@ found:
     p->state = UNUSED;
     return 0;
   }
+  numProcs++;
   sp = p->kstack + KSTACKSIZE;
 
   // Leave room for trap frame.
