@@ -20,9 +20,9 @@ exit:
   int $T_SYSCALL
   jmp exit
 
-# char init[] = "/statistics\0";
+# char init[] = "/init\0";
 init:
-  .string "/statistics\0"
+  .string "/init\0"
 
 # char *argv[] = { init, 0 };
 .p2align 2
