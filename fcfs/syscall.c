@@ -102,7 +102,6 @@ extern int sys_sleep(void);
 extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_wait2(void);
-extern int sys_wait2(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
 

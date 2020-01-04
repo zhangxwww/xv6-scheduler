@@ -11,7 +11,7 @@ main(int argc, char *argv[])
  		}
 	int i;
 	int n;
-	int j = 0;
+	
 	int k;
 	int retime;
 	int rutime;
@@ -43,8 +43,7 @@ main(int argc, char *argv[])
 	}
 	for (i = 0; i < 3; i++)
 			result[i] /= n;
-  	printf("\nAverage ready time: %d\n", result[0]);
-  	printf("\nAverage running time: %d\n", result[1]);
-  	printf("\nAverage sleeping time: %d\n", result[2]);
-	exit();
+  	printf(1, "\nAverage ready time: %d\n", result[0]);
+  	printf(1, "\nAverage running time: %d\n", result[1]);
+  	printf(1, "\nAverage sleeping time: %d\n", result[2]);	exit();
 }
