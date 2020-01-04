@@ -52,6 +52,9 @@ struct proc {
   uint createTime;              // Time when process is first started
   uint execTime;               // Time that process execution actually consumed
   uint maxTime;                // Time that the process ought to continue to consume according to the fairness rule
+  int stime;                   //process SLEEPING time
+  int retime;                  //process READY(RUNNABLE) time
+  int rutime;                  //process RUNNING time
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -59,3 +62,5 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+void updatestatistics(void);

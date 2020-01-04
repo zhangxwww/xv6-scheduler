@@ -57,6 +57,9 @@ struct proc {
   int priority;                // Priority of the process
   uint waitingTime;             // Waiting time of the process
   uint runningTime;             // Running time of the process
+  int stime;                   //process SLEEPING time
+  int retime;                  //process READY(RUNNABLE) time
+  int rutime;                  //process RUNNING time
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -68,3 +71,5 @@ struct proc {
 void updateTimes();
 void increasePriority(struct proc *);
 void decreasePriority(struct proc *);
+
+void updatestatistics(void);

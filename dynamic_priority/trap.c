@@ -51,6 +51,7 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
+      updatestatistics(); // will update proc statistic every clock tick
       updateTimes();
       wakeup(&ticks);
       release(&tickslock);
