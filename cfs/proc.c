@@ -970,7 +970,7 @@ procdump(void)
   }
 }
 
-int wait2(int *retime, int *rutime, int *stime) {
+int wait2(int *retime, int *rutime, int *stime, char* name) {
   struct proc *p;
   int havekids, pid;
   acquire(&ptable.lock);
@@ -999,6 +999,7 @@ int wait2(int *retime, int *rutime, int *stime) {
         p->rutime = 0;
         p->stime = 0;
         release(&ptable.lock);
+        strcpy(name, p->name);
         return pid;
       }
     }
