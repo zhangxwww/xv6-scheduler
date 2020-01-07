@@ -323,10 +323,10 @@ wait(void)
 }
 
 int get_total_time_slot_count(){
-	return time_slot_count();
+	return time_slot_count;
 }
 int get_total_cpu_running_time_slot_count(){
-	return cpu_running_time_slot_count();
+	return cpu_running_time_slot_count;
 }
 
 
