@@ -104,6 +104,8 @@ extern int sys_wait(void);
 extern int sys_wait2(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_get_total_time_slot_count(void);
+extern int sys_get_cpu_running_total_time_slot_count(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -128,6 +130,9 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_get_total_time_slot_count] sys_get_total_time_slot_count,
+[SYS_get_cpu_running_total_time_slot_count] sys_get_cpu_running_total_time_slot_count,
+
 };
 
 void

@@ -2,7 +2,16 @@
 #include "user.h"
 #include "param.h"
 
-#define IO_BUSY_TASK_TIMES 5
+
+//#include "statistics.h"
+//extern int time_slot_count;
+//extern int cpu_running_time_slot_count;
+
+
+
+
+
+#define IO_BUSY_TASK_TIMES 100
 
 void IO_BUSY_TASK(){
 	int i = 0;
@@ -14,7 +23,7 @@ void IO_BUSY_TASK(){
 void CPU_BUSY_SHORT_TASK(){
 	double x = 0;
 	for (int k = 0; k < 100; k++){
-		for (double z = 0; z < 10000.0; z+= 0.1){
+		for (double z = 0; z < 1000.0; z+= 0.1){
 			x =  x + 3.14 * 89.64;   // useless calculations to consume CPU time
 		}
 	}
@@ -24,7 +33,7 @@ void CPU_BUSY_LONG_TASK(){
 	double x = 0;
 	for(int i=0; i < 10; i++){
 		for (int k = 0; k < 100; k++){
-			for (double z = 0; z < 10000.0; z+= 0.1){
+			for (double z = 0; z < 1000.0; z+= 0.1){
 				x =  x + 3.14 * 89.64;   // useless calculations to consume CPU time
 			}
 		}
@@ -54,6 +63,8 @@ main(int argc, char *argv[])
 	for(int i = 0; i<3; i++){
 		count[i]=0;
 	}
+//        time_slot_count = 0;
+  //      cpu_running_time_slot_count = 0;
 	for (int i = 0; i < 3*n; i++){
 		pid = fork();
 		if (pid == 0) {
@@ -76,8 +87,12 @@ main(int argc, char *argv[])
 		result[type][1] += rutime;
 		result[type][2] += stime;
 	}
+        int total = get_total_time_slot_count();
+	int used = get_total_cpu_running_time_slot_count();
   	printf(1, "IO busy task: %d retime %d runtime %d stime %d count\n", result[0][0], result[0][1], result[0][2], count[0]);
   	printf(1, "CPU busy short task: %d retime %d runtime %d stime %d count\n", result[1][0], result[1][1], result[1][2], count[1]);
   	printf(1, "CPU busy long task: %d retime %d runtime %d stime %d count\n", result[2][0], result[2][1], result[2][2], count[2]);
+        printf(1, "cpu use ratio:%d/%d\n", used, total);
+        printf(1, "cpu throughput rate:%d/%d\n", 3*n, total);
 	exit();
 }

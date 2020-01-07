@@ -6,6 +6,10 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
 
 struct {
   struct spinlock lock;
@@ -318,6 +322,14 @@ wait(void)
   }
 }
 
+int get_total_time_slot_count(){
+	return time_slot_count();
+}
+int get_total_cpu_running_time_slot_count(){
+	return cpu_running_time_slot_count();
+}
+
+
 int wait2(int *retime, int *rutime, int *stime) {
   struct proc *p;
   int havekids, pid;
@@ -599,9 +611,10 @@ procdump(void)
 /*
   This method will run every clock tick and update the statistic fields for each proc
 */
-void updatestatistics() {
+void updatestatistics(int* cpu_busy) {
   struct proc *p;
   acquire(&ptable.lock);
+  int has_running_proc = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     switch(p->state) {
       case SLEEPING:
@@ -612,10 +625,12 @@ void updatestatistics() {
         break;
       case RUNNING:
         p->rutime++;
+        has_running_proc = 1;
         break;
       default:
         ;
     }
   }
   release(&ptable.lock);
+  *cpu_busy = has_running_proc;
 }

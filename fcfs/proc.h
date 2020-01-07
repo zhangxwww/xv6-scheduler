@@ -62,4 +62,4 @@ struct proc {
 //   expandable heap
 
 
-void updatestatistics(void);
+void updatestatistics(int*);

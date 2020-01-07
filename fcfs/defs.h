@@ -121,7 +121,8 @@ int             wait(void);
 int             wait2(int*, int*, int*);
 void            wakeup(void*);
 void            yield(void);
-
+int get_total_time_slot_count(void);
+int get_total_cpu_running_time_slot_count(void);
 // swtch.S
 void            swtch(struct context**, struct context*);
 

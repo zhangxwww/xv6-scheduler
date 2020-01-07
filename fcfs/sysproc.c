@@ -102,3 +102,10 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+int sys_get_total_time_slot_count(){
+	return get_total_time_slot_count();
+}
+int sys_get_total_cpu_running_time_slot_count(){
+	return get_total_cpu_running_time_slot_count();
+}
+
