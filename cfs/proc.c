@@ -486,6 +486,10 @@ myproc(void) {
   return p;
 }
 
+void setprocname(const char* name) {
+  safestrcpy(myproc()->name, name, siezof(name));
+}
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -999,7 +1003,7 @@ int wait2(int *retime, int *rutime, int *stime, char* name) {
         p->rutime = 0;
         p->stime = 0;
         release(&ptable.lock);
-        strcpy(name, p->name);
+        safestrcpy(name, p->name, sizeof(p->name)>16?16:sizeof(p->name));
         return pid;
       }
     }

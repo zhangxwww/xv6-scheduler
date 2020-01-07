@@ -64,3 +64,5 @@ struct proc {
 //   expandable heap
 
 void updatestatistics(void);
+struct proc* myproc(void);
+void setprocname(char*);
