@@ -6,6 +6,11 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
+extern int reset;
 
 // declare a 3-level queue
 struct proc* q[3][64];
@@ -14,11 +19,6 @@ struct proc* q[3][64];
 int numprocs[3] = {-1, -1, -1};
 uint maxSchedTimes[3] = {1, 2, 4};
 
-#include "statistics.h"
-
-extern int time_slot_count;
-extern int cpu_running_time_slot_count;
-extern int reset;
 
 struct {
   struct spinlock lock;
