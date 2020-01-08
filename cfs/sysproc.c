@@ -30,14 +30,13 @@ int
 sys_wait2(void)
 {
   int *retime, *rutime, *stime;
-  char name[16];
   if (argptr(0, (void*)&retime, sizeof(retime)) < 0)
     return -1;
   if (argptr(1, (void*)&rutime, sizeof(retime)) < 0)
     return -1;
   if (argptr(2, (void*)&stime, sizeof(stime)) < 0)
     return -1;
-  return wait2(retime, rutime, stime, name);
+  return wait2(retime, rutime, stime);
 }
 
 int

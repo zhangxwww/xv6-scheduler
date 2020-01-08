@@ -492,9 +492,6 @@ myproc(void) {
   return p;
 }
 
-void setprocname(const char* name) {
-  safestrcpy(myproc()->name, name, siezof(name));
-}
 
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
@@ -991,6 +988,7 @@ int init(){
   reset = 1;
   return 0;
 }
+
 
 int wait2(int *retime, int *rutime, int *stime) {
   struct proc *p;

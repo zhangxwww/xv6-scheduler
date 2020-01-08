@@ -332,6 +332,7 @@ int get_total_cpu_running_time_slot_count(){
 
 int init(){
   reset = 1;
+  cprintf("reset=%d\n", reset);
   return 0;
 }
 
