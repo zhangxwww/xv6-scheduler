@@ -107,7 +107,7 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
-  statistics();
+  //statistics();
 
   for(;;){
     printf(1, "init: starting sh\n");

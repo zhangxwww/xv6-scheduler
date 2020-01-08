@@ -26,6 +26,7 @@ interrupt(int *p, int int_type)
 #define IO_BUSY_TASK_TIMES 100
 
 void IO_BUSY_TASK(){
+  changePriority(getpid(),1);
 	int i = 0;
 	for(; i<IO_BUSY_TASK_TIMES; i++) {
 		sleep(1);
@@ -33,7 +34,7 @@ void IO_BUSY_TASK(){
 }
 
 void CPU_BUSY_SHORT_TASK(){
-	
+	changePriority(getpid(),2);
 	double x = 0;
 	for (int k = 0; k < 100; k++){
 		for (double z = 0; z < 1000.0; z+= 0.1){
@@ -43,6 +44,7 @@ void CPU_BUSY_SHORT_TASK(){
 }
 
 void CPU_BUSY_LONG_TASK(){
+  changePriority(getpid(),3);
 	printf(1, "entering CPU busy long task..\n");
 	double x = 0;
 	for(int i=0; i < 10; i++){
