@@ -121,3 +121,11 @@ sys_changePriority(void) {
   }
   return changePriority(pid, priority);
 }
+
+int sys_get_total_time_slot_count(){
+	return get_total_time_slot_count();
+}
+int sys_get_total_cpu_running_time_slot_count(){
+	return get_total_cpu_running_time_slot_count();
+}
+
