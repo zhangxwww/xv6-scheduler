@@ -600,9 +600,10 @@ int wait2(int *retime, int *rutime, int *stime) {
 /*
   This method will run every clock tick and update the statistic fields for each proc
 */
-void updatestatistics() {
+void updatestatistics(int* cpu_busy) {
   struct proc *p;
   acquire(&ptable.lock);
+  int has_running_proc = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     switch(p->state) {
       case SLEEPING:
@@ -613,10 +614,12 @@ void updatestatistics() {
         break;
       case RUNNING:
         p->rutime++;
+        has_running_proc = 1;
         break;
       default:
         ;
     }
   }
   release(&ptable.lock);
+  *cpu_busy = has_running_proc;
 }

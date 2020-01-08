@@ -72,4 +72,4 @@ void updateTimes();
 void increasePriority(struct proc *);
 void decreasePriority(struct proc *);
 
-void updatestatistics(void);
+void updatestatistics(int*);

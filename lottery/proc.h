@@ -66,4 +66,4 @@ struct proc {
 int getTotalLotteries();
 int random(int);
 
-void updatestatistics(void);
+void updatestatistics(int*);

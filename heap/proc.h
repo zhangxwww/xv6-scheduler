@@ -64,4 +64,4 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 
-void updatestatistics(void);
+void updatestatistics(int*);
