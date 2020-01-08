@@ -132,6 +132,8 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_get_total_time_slot_count] sys_get_total_time_slot_count,
+[SYS_get_total_cpu_running_time_slot_count] sys_get_total_cpu_running_time_slot_count,
 };
 
 void
