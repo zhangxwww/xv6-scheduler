@@ -365,6 +365,12 @@ scheduler(void)
           // keep record of the schedule times of process p
           (p->schedTimes)++;
           p->state = RUNNING;
+          
+          q[priority][i] = 0;
+          for (int j = i; j < numprocs[priority]; j++) {
+            q[priority][j] = q[priority][j + 1];
+          }
+          q[priority][(numprocs[priority])--] = 0;
 
           swtch(&(c->scheduler), p->context);
           switchkvm();
