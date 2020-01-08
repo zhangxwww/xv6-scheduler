@@ -12,6 +12,7 @@
 //statistics
 extern int time_slot_count;
 extern int cpu_running_time_slot_count;
+extern int reset;
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -62,6 +63,11 @@ trap(struct trapframe *tf)
         cpu_running_time_slot_count += 1;
       }
       time_slot_count += 1;
+      if(reset){
+        reset = 0;
+        time_slot_count = 0;
+        cpu_running_time_slot_count = 0;
+      }
       wakeup(&ticks);
       release(&tickslock);
     }

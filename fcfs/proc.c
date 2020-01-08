@@ -10,6 +10,7 @@
 
 extern int time_slot_count;
 extern int cpu_running_time_slot_count;
+extern reset;
 
 struct {
   struct spinlock lock;
@@ -329,6 +330,9 @@ int get_total_cpu_running_time_slot_count(){
 	return cpu_running_time_slot_count;
 }
 
+void init(){
+  reset = 1;
+}
 
 int wait2(int *retime, int *rutime, int *stime) {
   struct proc *p;

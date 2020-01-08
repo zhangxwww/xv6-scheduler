@@ -65,6 +65,7 @@ main(int argc, char *argv[])
 	}
 //        time_slot_count = 0;
   //      cpu_running_time_slot_count = 0;
+	init();
 	for (int i = 0; i < 3*n; i++){
 		pid = fork();
 		if (pid == 0) {

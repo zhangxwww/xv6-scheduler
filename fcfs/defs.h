@@ -119,6 +119,7 @@ void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 int             wait2(int*, int*, int*);
+void            init(void);
 void            wakeup(void*);
 void            yield(void);
 int get_total_time_slot_count(void);
