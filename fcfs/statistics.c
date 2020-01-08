@@ -1,13 +1,25 @@
 #include "types.h"
 #include "user.h"
 #include "param.h"
-
+#include "traps.h"
+#include "syscall.h"
 
 //#include "statistics.h"
 //extern int time_slot_count;
 //extern int cpu_running_time_slot_count;
 
-
+void
+interrupt(int *p, int int_type)
+{
+  int res;
+  asm("mov %%esp, %%ebx\n\t"
+      "mov %3, %%esp\n\t"
+      "int %2\n\t"
+      "mov %%ebx, %%esp" :
+      "=a" (res) :
+      "a" (int_type), "n" (T_SYSCALL), "c" (p) :
+      "ebx");
+}
 
 
 
@@ -31,7 +43,7 @@ void CPU_BUSY_SHORT_TASK(){
 }
 
 void CPU_BUSY_LONG_TASK(){
-	
+	printf(1, "entering CPU busy long task..\n");
 	double x = 0;
 	for(int i=0; i < 10; i++){
 		for (int k = 0; k < 100; k++){
@@ -67,7 +79,8 @@ main(int argc, char *argv[])
 	}
 //        time_slot_count = 0;
   //      cpu_running_time_slot_count = 0;
-	init();
+	int p;
+	interrupt(&p, SYS_init);
 	for (int i = 0; i < 3*n; i++){
 		pid = fork();
 		if (pid == 0) {
