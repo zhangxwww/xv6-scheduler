@@ -16,7 +16,7 @@
 void IO_BUSY_TASK(){
 	int i = 0;
 	for(; i<IO_BUSY_TASK_TIMES; i++) {
-		printf(1, "Testing IO_BUSY TASK %d", i);
+		sleep(1);
 	}
 }
 
