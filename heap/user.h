@@ -24,6 +24,9 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int init(void);
+int get_total_time_slot_count(void);
+int get_total_cpu_running_time_slot_count(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
