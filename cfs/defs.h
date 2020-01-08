@@ -121,6 +121,7 @@ int             wait(void);
 int             wait2(int*, int*, int*, char*);
 void            wakeup(void*);
 void            yield(void);
+int             init(void);
 int get_total_time_slot_count(void);
 int get_total_cpu_running_time_slot_count(void);
 
