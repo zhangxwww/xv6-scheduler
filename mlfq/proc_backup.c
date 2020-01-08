@@ -16,7 +16,7 @@ extern int reset;
 struct proc* q[3][64];
 // max indices of processes in each queue
 // equals length(queue) - 1
-//int numprocs[3] = {-1, -1, -1};
+int numprocs[3] = {-1, -1, -1};
 uint maxSchedTimes[3] = {1, 2, 4};
 
 
@@ -105,7 +105,7 @@ found:
 
   // Initialize additional process attributes
   p->schedTimes = 0;
-  p->priority = 0;
+  q[0][++(numprocs[0])] = p;
 
   release(&ptable.lock);
 
@@ -232,6 +232,7 @@ fork(void)
 
   acquire(&ptable.lock);
 
+  q[0][++(numprocs[0])] = np;
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -340,7 +341,7 @@ wait(void)
 void
 scheduler(void)
 {
-    struct proc *p;
+  struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -350,76 +351,68 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      struct proc *pp = 0;
-      uint priority = 0;
-
-      int found = 0;
-      while (priority <= 2) {
-        for (pp = ptable.proc; pp < &ptable.proc[NPROC]; pp++) {
-          if (pp->state == RUNNABLE && pp->priority == priority) {
-            found = 1;
-            break;
+    for (int priority = 0; priority < 3; priority++) {
+      //if (numprocs[priority] < -1) 
+      cprintf("numprocs[%d]: %d\n", priority, numprocs[priority]);
+      for (int i = 0; i <= numprocs[priority]; i++) {
+          if (q[priority][i]->state != RUNNABLE) {
+              continue;
           }
-        }
-        if (found == 1) {
-          break;
-        }
-        priority++;
-      }
+          p = q[priority][i];
 
-      if (found == 1 && pp != 0) {
-        p = pp;
-      }
-      else {
-        if (p->state != RUNNABLE) {
-          continue;
-        }
-      }
+          //cprintf("=====\n");
+          //procdump();
 
-      //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
+          // Switch to chosen process.  It is the process's job
+          // to release ptable.lock and then reacquire it
+          // before jumping back to us.
+          c->proc = p;
+          switchuvm(p);
+          // keep record of the schedule times of process p
+          (p->schedTimes)++;
+          p->state = RUNNING;
+          
+          q[priority][i] = 0;
+          for (int j = i; j < numprocs[priority]; j++) {
+            q[priority][j] = q[priority][j + 1];
+          }
+          q[priority][(numprocs[priority])--] = 0;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      if (p->schedTimes == maxSchedTimes[p->priority]) {
-        // move the process to the lower priority queue
-        // if it's not on the lowest level
-        if (p->priority < 2) {
-            //cprintf("numproc[%d]: %d\n", p->priority, numprocs[priority]);
-            //q[p->priority + 1][++(numprocs[p->priority + 1])] = p;
-            //q[p->priority][numprocs[p->priority]--] = 0;
-            p->priority++;
-            /*q[priority][i] = 0;
-            for (int j = i; j < numprocs[priority]; j++) {
-                q[priority][j] = q[priority][j + 1];
+          // modify the priority
+          if (p->schedTimes == maxSchedTimes[p->priority]) {
+            // move the process to the lower priority queue
+            // if it's not on the lowest level
+            if (p->priority < 2) {
+                //cprintf("numproc[%d]: %d\n", p->priority, numprocs[priority]);
+                //q[p->priority + 1][++(numprocs[p->priority + 1])] = p;
+                //q[p->priority][numprocs[p->priority]--] = 0;
+                p->priority++;
+                /*q[priority][i] = 0;
+                for (int j = i; j < numprocs[priority]; j++) {
+                    q[priority][j] = q[priority][j + 1];
+                }
+                q[priority][(numprocs[priority])--] = 0;*/
+                p->schedTimes = 0;
             }
-            q[priority][(numprocs[priority])--] = 0;*/
-            p->schedTimes = 0;
-        }
-        // move the process to the rear of the queue
-        // if it's on the lowest level
-        else {
-            //q[p->priority][++numprocs[p->priority]] = p;
-            /* q[2][i] = 0;
-            for (int j = i; j < numprocs[2]; j++) {
-                q[2][j] = q[2][j + 1];
+            // move the process to the rear of the queue
+            // if it's on the lowest level
+            else {
+                //q[p->priority][++numprocs[p->priority]] = p;
+                /* q[2][i] = 0;
+                for (int j = i; j < numprocs[2]; j++) {
+                    q[2][j] = q[2][j + 1];
+                }
+                q[2][numprocs[2]] = p;*/
+                p->schedTimes = 0;
             }
-            q[2][numprocs[2]] = p;*/
-            p->schedTimes = 0;
-        }
+          }
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
       }
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
     }
     release(&ptable.lock);
   }
@@ -538,7 +531,7 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->state == SLEEPING && p->chan == chan) {
-      //q[p->priority][++(numprocs[p->priority])] = p;
+      q[p->priority][++(numprocs[p->priority])] = p;
       p->state = RUNNABLE;
     }
   }
@@ -567,7 +560,7 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING) {
-        //q[p->priority][++(numprocs[p->priority])] = p;
+        q[p->priority][++(numprocs[p->priority])] = p;
         p->state = RUNNABLE;
       }
       release(&ptable.lock);
