@@ -39,7 +39,7 @@ sys_wait2(void)
   return wait2(retime, rutime, stime);
 }
 
-void
+int
 sys_init(void){
   return init();
 }

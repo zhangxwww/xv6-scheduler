@@ -1,3 +1,3 @@
 int time_slot_count;
 int cpu_running_time_slot_count;
-int reset = 0;
+extern int reset;

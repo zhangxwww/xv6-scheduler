@@ -12,7 +12,7 @@
 //statistics
 extern int time_slot_count;
 extern int cpu_running_time_slot_count;
-extern int reset;
+int reset=0;
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];

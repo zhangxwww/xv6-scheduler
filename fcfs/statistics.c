@@ -21,6 +21,7 @@ void IO_BUSY_TASK(){
 }
 
 void CPU_BUSY_SHORT_TASK(){
+	printf(1, "entering CPU busy short task..\n");
 	double x = 0;
 	for (int k = 0; k < 100; k++){
 		for (double z = 0; z < 1000.0; z+= 0.1){
@@ -30,6 +31,7 @@ void CPU_BUSY_SHORT_TASK(){
 }
 
 void CPU_BUSY_LONG_TASK(){
+	printf(1, "entering CPU busy long task..\n");
 	double x = 0;
 	for(int i=0; i < 10; i++){
 		for (int k = 0; k < 100; k++){
