@@ -41,6 +41,11 @@ sys_wait2(void)
 }
 
 int
+sys_init(void){
+  return init();
+}
+
+int
 sys_kill(void)
 {
   int pid;

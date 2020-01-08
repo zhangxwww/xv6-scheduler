@@ -14,6 +14,12 @@ struct proc* q[3][64];
 int numprocs[3] = {-1, -1, -1};
 uint maxSchedTimes[3] = {1, 2, 4};
 
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
+extern int reset;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -579,6 +585,18 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int get_total_time_slot_count(){
+	return time_slot_count;
+}
+int get_total_cpu_running_time_slot_count(){
+	return cpu_running_time_slot_count;
+}
+
+int init(){
+  reset = 1;
+  return 0;
 }
 
 int wait2(int *retime, int *rutime, int *stime) {

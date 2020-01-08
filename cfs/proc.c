@@ -428,6 +428,12 @@ struct proc* heappop() {
 uint burstStartTime;
 int numProcs = 0;
 
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
+extern int reset;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -974,7 +980,19 @@ procdump(void)
   }
 }
 
-int wait2(int *retime, int *rutime, int *stime, char* name) {
+int get_total_time_slot_count(){
+	return time_slot_count;
+}
+int get_total_cpu_running_time_slot_count(){
+	return cpu_running_time_slot_count;
+}
+
+int init(){
+  reset = 1;
+  return 0;
+}
+
+int wait2(int *retime, int *rutime, int *stime) {
   struct proc *p;
   int havekids, pid;
   acquire(&ptable.lock);
@@ -1003,7 +1021,6 @@ int wait2(int *retime, int *rutime, int *stime, char* name) {
         p->rutime = 0;
         p->stime = 0;
         release(&ptable.lock);
-        safestrcpy(name, p->name, sizeof(p->name)>16?16:sizeof(p->name));
         return pid;
       }
     }

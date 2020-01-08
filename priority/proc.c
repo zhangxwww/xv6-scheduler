@@ -7,6 +7,12 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
+extern int reset;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -559,6 +565,18 @@ changePriority(int pid, int priority) {
   }
   release(&ptable.lock);
   return pid;
+}
+
+int get_total_time_slot_count(){
+	return time_slot_count;
+}
+int get_total_cpu_running_time_slot_count(){
+	return cpu_running_time_slot_count;
+}
+
+int init(){
+  reset = 1;
+  return 0;
 }
 
 int wait2(int *retime, int *rutime, int *stime) {
