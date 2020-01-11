@@ -27,6 +27,24 @@ sys_wait(void)
 }
 
 int
+sys_wait2(void)
+{
+  int *retime, *rutime, *stime;
+  if (argptr(0, (void*)&retime, sizeof(retime)) < 0)
+    return -1;
+  if (argptr(1, (void*)&rutime, sizeof(retime)) < 0)
+    return -1;
+  if (argptr(2, (void*)&stime, sizeof(stime)) < 0)
+    return -1;
+  return wait2(retime, rutime, stime);
+}
+
+int
+sys_init(void){
+  return init();
+}
+
+int
 sys_kill(void)
 {
   int pid;
@@ -101,3 +119,11 @@ sys_changeLottery(void) {
     return -1;
   return changeLottery(pid, tickets);
 }
+
+int sys_get_total_time_slot_count(){
+	return get_total_time_slot_count();
+}
+int sys_get_total_cpu_running_time_slot_count(){
+	return get_total_cpu_running_time_slot_count();
+}
+

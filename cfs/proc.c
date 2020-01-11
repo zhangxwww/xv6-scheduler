@@ -428,6 +428,12 @@ struct proc* heappop() {
 uint burstStartTime;
 int numProcs = 0;
 
+#include "statistics.h"
+
+extern int time_slot_count;
+extern int cpu_running_time_slot_count;
+extern int reset;
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -486,6 +492,7 @@ myproc(void) {
   return p;
 }
 
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -511,7 +518,6 @@ found:
   p->pid = nextpid++;
   p->createTime = ticks;
   p->execTime = 0;
-  numProcs++;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -519,6 +525,7 @@ found:
     p->state = UNUSED;
     return 0;
   }
+  numProcs++;
   sp = p->kstack + KSTACKSIZE;
 
   // Leave room for trap frame.
@@ -748,7 +755,6 @@ wait(void)
 void
 scheduler(void)
 {
-  struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -758,31 +764,26 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-      struct proc* p;
-      p = heappop();
-      if (p != 0) {
-        //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
-        // Switch to chosen process.  It is the process's job
-        // to release ptable.lock and then reacquire it
-        // before jumping back to us.
-        c->proc = p;
-        switchuvm(p);
-        p->state = RUNNING;
-        burstStartTime = ticks;
-        c->proc->maxTime = ((ticks - c->proc->createTime)) / numProcs;
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
+    struct proc* p;
+    p = heappop();
+    if (p != 0) {
+      //cprintf("cpu: %d, proc: %s\n", c->apicid, p->name);
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+      burstStartTime = ticks;
+      c->proc->maxTime = ((ticks - c->proc->createTime)) / numProcs;
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-      }
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -922,8 +923,9 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING) {
         p->state = RUNNABLE;
+      }
         heappush(p);
       release(&ptable.lock);
       return 0;
@@ -968,4 +970,88 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int get_total_time_slot_count(){
+	return time_slot_count;
+}
+int get_total_cpu_running_time_slot_count(){
+	return cpu_running_time_slot_count;
+}
+
+int init(){
+  reset = 1;
+  return 0;
+}
+
+
+int wait2(int *retime, int *rutime, int *stime) {
+  struct proc *p;
+  int havekids, pid;
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for zombie children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != myproc())
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        *retime = p->retime;
+        *rutime = p->rutime;
+        *stime = p->stime;
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->state = UNUSED;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->retime = 0;
+        p->rutime = 0;
+        p->stime = 0;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || myproc()->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(myproc(), &ptable.lock);  //DOC: wait-sleep
+  }
+}
+
+/*
+  This method will run every clock tick and update the statistic fields for each proc
+*/
+void updatestatistics(int* cpu_busy) {
+  struct proc *p;
+  acquire(&ptable.lock);
+  int has_running_proc = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    switch(p->state) {
+      case SLEEPING:
+        p->stime++;
+        break;
+      case RUNNABLE:
+        p->retime++;
+        break;
+      case RUNNING:
+        p->rutime++;
+        has_running_proc = 1;
+        break;
+      default:
+        ;
+    }
+  }
+  release(&ptable.lock);
+  *cpu_busy = has_running_proc;
 }

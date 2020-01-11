@@ -52,6 +52,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int lottery;                 // Lotteries
+  int stime;                   //process SLEEPING time
+  int retime;                  //process READY(RUNNABLE) time
+  int rutime;                  //process RUNNING time
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -62,3 +65,5 @@ struct proc {
 
 int getTotalLotteries();
 int random(int);
+
+void updatestatistics(int*);

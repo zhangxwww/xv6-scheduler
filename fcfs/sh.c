@@ -10,6 +10,7 @@
 #define PIPE  3
 #define LIST  4
 #define BACK  5
+#define TEST 6
 
 #define MAXARGS 10
 
@@ -487,6 +488,9 @@ nulterminate(struct cmd *cmd)
   case BACK:
     bcmd = (struct backcmd*)cmd;
     nulterminate(bcmd->cmd);
+    break;
+
+  case TEST:
     break;
   }
   return cmd;

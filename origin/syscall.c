@@ -101,13 +101,20 @@ extern int sys_sbrk(void);
 extern int sys_sleep(void);
 extern int sys_unlink(void);
 extern int sys_wait(void);
+extern int sys_wait2(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_init(void);
+extern int sys_get_total_time_slot_count(void);
+extern int sys_get_total_cpu_running_time_slot_count(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
 [SYS_wait]    sys_wait,
+[SYS_wait2]   sys_wait2,
+[SYS_init]    sys_init,
 [SYS_pipe]    sys_pipe,
 [SYS_read]    sys_read,
 [SYS_kill]    sys_kill,
@@ -126,6 +133,8 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_get_total_time_slot_count] sys_get_total_time_slot_count,
+[SYS_get_total_cpu_running_time_slot_count] sys_get_total_cpu_running_time_slot_count,
 };
 
 void
