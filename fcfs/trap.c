@@ -64,7 +64,6 @@ trap(struct trapframe *tf)
       }
       time_slot_count += 1;
       if(reset){
-        cprintf("reset=%d trap\n", reset);
         reset = 0;
         time_slot_count = 0;
         cpu_running_time_slot_count = 0;

@@ -5,8 +5,6 @@
 #include "user.h"
 #include "fcntl.h"
 
-#define STATISTICS_N 8
-#define IO_BUSY_TASK_TIMES 100
 
 char *argv[] = { "sh", 0 };
 char *test_argv[] = {"statistics"};
