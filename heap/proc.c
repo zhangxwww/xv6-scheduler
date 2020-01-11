@@ -475,10 +475,12 @@ scheduler(void)
 
       // there exists at least one RUNNABLE process
       // extract the minimum one
+      printHeap();
       p = heappop();
       if (p == 0) {
         continue;
       }
+      //cprintf("%s\n", p->name);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -749,6 +751,9 @@ void updatestatistics(int* cpu_busy) {
   acquire(&ptable.lock);
   int has_running_proc = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(!p){
+      continue;
+    }
     switch(p->state) {
       case SLEEPING:
         p->stime++;

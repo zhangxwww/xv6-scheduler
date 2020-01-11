@@ -672,6 +672,9 @@ void updatestatistics(int* cpu_busy) {
   acquire(&ptable.lock);
   int has_running_proc = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(!p){
+      continue;
+    }
     switch(p->state) {
       case SLEEPING:
         p->stime++;
