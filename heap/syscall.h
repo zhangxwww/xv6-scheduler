@@ -20,7 +20,3 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_wait2  22
-#define SYS_get_total_time_slot_count  23
-#define SYS_get_total_cpu_running_time_slot_count  24
-#define SYS_init  25

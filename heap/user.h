@@ -5,7 +5,6 @@ struct rtcdate;
 int fork(void);
 int exit(void) __attribute__((noreturn));
 int wait(void);
-int wait2(int*, int*, int*);
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
@@ -24,9 +23,6 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int init(void);
-int get_total_time_slot_count(void);
-int get_total_cpu_running_time_slot_count(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

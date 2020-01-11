@@ -90,11 +90,7 @@ struct proc* heappop() {
 }
 /* ------------------------------------------------------------ */
 
-#include "statistics.h"
 
-extern int time_slot_count;
-extern int cpu_running_time_slot_count;
-extern int reset;
 
 struct {
   struct spinlock lock;
@@ -475,7 +471,7 @@ scheduler(void)
 
       // there exists at least one RUNNABLE process
       // extract the minimum one
-      printHeap();
+      //printHeap();
       p = heappop();
       if (p == 0) {
         continue;
@@ -687,91 +683,9 @@ procdump(void)
   }
 }
 
-int get_total_time_slot_count(){
-	return time_slot_count;
-}
-int get_total_cpu_running_time_slot_count(){
-	return cpu_running_time_slot_count;
-}
 
-int init(){
-  reset = 1;
-  return 0;
-}
 
-int wait2(int *retime, int *rutime, int *stime) {
-  struct proc *p;
-  int havekids, pid;
-  acquire(&ptable.lock);
-  for(;;){
-    // Scan through table looking for zombie children.
-    havekids = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != myproc())
-        continue;
-      havekids = 1;
-      if(p->state == ZOMBIE){
-        // Found one.
-        *retime = p->retime;
-        *rutime = p->rutime;
-        *stime = p->stime;
-        pid = p->pid;
-        kfree(p->kstack);
-        p->kstack = 0;
-        freevm(p->pgdir);
-        p->state = UNUSED;
-        p->pid = 0;
-        p->parent = 0;
-        p->name[0] = 0;
-        p->killed = 0;
-        p->retime = 0;
-        p->rutime = 0;
-        p->stime = 0;
-        release(&ptable.lock);
-        return pid;
-      }
-    }
 
-    // No point waiting if we don't have any children.
-    if(!havekids || myproc()->killed){
-      release(&ptable.lock);
-      return -1;
-    }
-
-    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(myproc(), &ptable.lock);  //DOC: wait-sleep
-  }
-}
-
-/*
-  This method will run every clock tick and update the statistic fields for each proc
-*/
-void updatestatistics(int* cpu_busy) {
-  struct proc *p;
-  acquire(&ptable.lock);
-  int has_running_proc = 0;
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(!p){
-      continue;
-    }
-    switch(p->state) {
-      case SLEEPING:
-        p->stime++;
-        break;
-      case RUNNABLE:
-        p->retime++;
-        break;
-      case RUNNING:
-        p->rutime++;
-        has_running_proc = 1;
-        break;
-      default:
-        ;
-    }
-  }
-  release(&ptable.lock);
-  *cpu_busy = has_running_proc;
-}
 
 void printHeap() {
   cprintf("=============\n");

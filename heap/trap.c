@@ -8,12 +8,6 @@
 #include "traps.h"
 #include "spinlock.h"
 
-#include "statistics.h"
-
-//statistics
-extern int time_slot_count;
-extern int cpu_running_time_slot_count;
-int reset=0;
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -58,17 +52,7 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
-      int running;
-      updatestatistics(&running); // will update proc statistic every clock tick
-      if(running){
-        cpu_running_time_slot_count += 1;
-      }
-      time_slot_count += 1;
-      if(reset){
-        reset = 0;
-        time_slot_count = 0;
-        cpu_running_time_slot_count = 0;
-      }      wakeup(&ticks);
+      wakeup(&ticks);
       release(&tickslock);
     }
     lapiceoi();
